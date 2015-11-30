@@ -1,4 +1,5 @@
-package sbtavro;
+package sbtavro
+
 
 import java.io.File
 
@@ -42,9 +43,10 @@ import sbt.singleFileFinder
 import sbt.toGroupID
 
 /**
- * Simple plugin for generating the Java sources for Avro schemas and protocols.
- */
+  * Simple plugin for generating the Java sources for Avro schemas and protocols.
+  */
 object SbtAvro extends Plugin {
+
   val avroConfig = config("avro")
 
   val stringType = SettingKey[String]("string-type", "Type for representing strings. " +
@@ -56,8 +58,12 @@ object SbtAvro extends Plugin {
   val generate = TaskKey[Seq[File]]("generate", "Generate the Java sources for the Avro files.")
 
   lazy val avroSettings: Seq[Setting[_]] = inConfig(avroConfig)(Seq[Setting[_]](
-    sourceDirectory <<= (sourceDirectory in Compile) { _ / "avro" },
-    javaSource <<= (sourceManaged in Compile) { _ / "compiled_avro" },
+    sourceDirectory <<= (sourceDirectory in Compile) {
+      _ / "avro"
+    },
+    javaSource <<= (sourceManaged in Compile) {
+      _ / "compiled_avro"
+    },
     stringType := "CharSequence",
     fieldVisibility := "public_deprecated",
     version := "1.7.3",
@@ -70,10 +76,10 @@ object SbtAvro extends Plugin {
     sourceGenerators in Compile <+= (generate in avroConfig),
     managedSourceDirectories in Compile <+= (javaSource in avroConfig),
     cleanFiles <+= (javaSource in avroConfig),
-    libraryDependencies <+= (version in avroConfig)("org.apache.avro" % "avro-compiler" % _),
+    libraryDependencies <+= (version in avroConfig) ("org.apache.avro" % "avro-compiler" % _),
     ivyConfigurations += avroConfig)
 
-  private def compile(srcDir: File, target: File, log: Logger, stringTypeName: String, fieldVisibilityName: String) = {
+  private def compileAvro(srcDir: File, target: File, log: Logger, stringTypeName: String, fieldVisibilityName: String) = {
     val stringType = StringType.valueOf(stringTypeName);
     log.info("Avro compiler using stringType=%s".format(stringType));
 
@@ -111,13 +117,13 @@ object SbtAvro extends Plugin {
     stringType,
     fieldVisibility,
     cacheDirectory) map {
-      (out, srcDir, targetDir, stringTypeName, fieldVisibilityName, cache) =>
-        val cachedCompile = FileFunction.cached(cache / "avro",
-          inStyle = FilesInfo.lastModified,
-          outStyle = FilesInfo.exists) { (in: Set[File]) =>
-            compile(srcDir, targetDir, out.log, stringTypeName, fieldVisibilityName)
-          }
-        cachedCompile((srcDir ** "*.av*").get.toSet).toSeq
-    }
+    (out, srcDir, targetDir, stringTypeName, fieldVisibilityName, cache) =>
+      val cachedCompile = FileFunction.cached(cache / "avro",
+        inStyle = FilesInfo.lastModified,
+        outStyle = FilesInfo.exists) { (in: Set[File]) =>
+        compileAvro(srcDir, targetDir, out.log, stringTypeName, fieldVisibilityName)
+      }
+      cachedCompile((srcDir ** "*.av*").get.toSet).toSeq
+  }
 
 }
