@@ -75,7 +75,7 @@ object SbtAvro extends Plugin {
     generate <<= sourceGeneratorTask)) ++ Seq[Setting[_]](
     sourceGenerators in Compile <+= (generate in avroConfig),
     managedSourceDirectories in Compile <+= (javaSource in avroConfig),
-    cleanFiles <+= (javaSource in avroConfig),
+    (cleanFiles in avroConfig) <+= (javaSource in avroConfig),
     libraryDependencies <+= (version in avroConfig) ("org.apache.avro" % "avro-compiler" % _),
     ivyConfigurations += avroConfig)
 
